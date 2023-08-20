@@ -1,7 +1,6 @@
 package guestmetric
 
 import (
-	xenstoreclient "../xenstoreclient"
 	"bufio"
 	"bytes"
 	"fmt"
@@ -11,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	xenstoreclient "xe-guest-utilities/xenstoreclient"
 )
 
 type Collector struct {
@@ -57,7 +57,7 @@ func (c *Collector) CollectMisc() (GuestMetric, error) {
 
 func (c *Collector) CollectMemory() (GuestMetric, error) {
 	current := make(GuestMetric, 0)
-	f, err := os.OpenFile("/proc/meminfo", os.O_RDONLY, 0666)
+	f, err := os.Open("/proc/meminfo")
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (c *Collector) CollectMemory() (GuestMetric, error) {
 		switch parts[0] {
 		case "MemTotal":
 			current["meminfo_total"] = parts[1]
-		case "MemFree":
+		case "MemAvailable":
 			current["meminfo_free"] = parts[1]
 		}
 	}

@@ -21,23 +21,27 @@ OBJECTS += $(OBJECTDIR)/xenstore
 PACKAGE = xe-guest-utilities
 VERSION = $(PRODUCT_VERSION)
 RELEASE := $(shell git rev-list HEAD | wc -l)
-ARCH := $(shell go version|awk -F'/' '{print $$2}')
+ifeq ($(GOARCH),)
+        ARCH := $(shell go version|awk -F'/' '{print $$2}')
+else
+        ARCH := $(GOARCH)
+endif
 
 ifeq ($(ARCH), amd64)
 	ARCH = x86_64
 endif
 
 XE_DAEMON_SOURCES :=
-XE_DAEMON_SOURCES += ./xe-daemon/xe-daemon.go
-XE_DAEMON_SOURCES += ./syslog/syslog.go
-XE_DAEMON_SOURCES += ./system/system.go
-XE_DAEMON_SOURCES += ./guestmetric/guestmetric.go
-XE_DAEMON_SOURCES += ./guestmetric/guestmetric_linux.go
-XE_DAEMON_SOURCES += ./xenstoreclient/xenstore.go
+XE_DAEMON_SOURCES += xe-daemon/xe-daemon.go
+XE_DAEMON_SOURCES += syslog/syslog.go
+XE_DAEMON_SOURCES += system/system.go
+XE_DAEMON_SOURCES += guestmetric/guestmetric.go
+XE_DAEMON_SOURCES += guestmetric/guestmetric_linux.go
+XE_DAEMON_SOURCES += xenstoreclient/xenstore.go
 
 XENSTORE_SOURCES :=
-XENSTORE_SOURCES += ./xenstore/xenstore.go
-XENSTORE_SOURCES += ./xenstoreclient/xenstore.go
+XENSTORE_SOURCES += xenstore/xenstore.go
+XENSTORE_SOURCES += xenstoreclient/xenstore.go
 
 .PHONY: build
 build: $(DISTDIR)/$(PACKAGE)_$(VERSION)-$(RELEASE)_$(ARCH).tgz
@@ -60,10 +64,13 @@ $(DISTDIR)/$(PACKAGE)_$(VERSION)-$(RELEASE)_$(ARCH).tgz: $(OBJECTS)
 	  ln -sf xenstore $(STAGEDIR)/usr/bin/xenstore-exists ; \
 	  ln -sf xenstore $(STAGEDIR)/usr/bin/xenstore-rm ; \
 	  ln -sf xenstore $(STAGEDIR)/usr/bin/xenstore-list ; \
+	  ln -sf xenstore $(STAGEDIR)/usr/bin/xenstore-ls ; \
+	  ln -sf xenstore $(STAGEDIR)/usr/bin/xenstore-chmod ; \
+	  ln -sf xenstore $(STAGEDIR)/usr/bin/xenstore-watch ; \
 	  install -d $(STAGEDIR)/etc/udev/rules.d/ ; \
 	  install -m 644 $(SOURCEDIR)/xen-vcpu-hotplug.rules $(STAGEDIR)/etc/udev/rules.d/z10_xen-vcpu-hotplug.rules ; \
 	  cd $(STAGEDIR) ; \
-	  tar cf $@ * \
+	  tar zcf $@ * \
 	)
 
 $(OBJECTDIR)/xe-daemon: $(XE_DAEMON_SOURCES:%=$(GOBUILDDIR)/%)
